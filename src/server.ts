@@ -227,7 +227,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                         this.env.TOKEN_DB,
                         userId,
                         TOOL_COST,
-                        "mcp-typescript-docs",
+                        "tsmcpdocs",
                         TOOL_NAME,
                         {
                             query: query.substring(0, 100)

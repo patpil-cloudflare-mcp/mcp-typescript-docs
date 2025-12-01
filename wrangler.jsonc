@@ -23,7 +23,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "mcp-typescript-docs",
+  "name": "tsmcpdocs",
   "main": "src/index.ts",
   "compatibility_date": "2025-03-10",
   "compatibility_flags": ["nodejs_compat"],
@@ -181,7 +181,7 @@
    */
   "routes": [
     {
-      "pattern": "mcp-typescript-docs.wtyczki.ai",
+      "pattern": "tsmcpdocs.wtyczki.ai",
       "custom_domain": true
     }
   ],

@@ -376,7 +376,7 @@ async function getOrCreateServer(
           env.TOKEN_DB,
           userId,
           TOOL_COST,
-          "mcp-typescript-docs",
+          "tsmcpdocs",
           TOOL_NAME,
           { query: query.substring(0, 100) },
           processed.substring(0, 200) + '...',
@@ -781,7 +781,7 @@ async function executeSearchMcpDocsTool(
       env.TOKEN_DB,
       userId,
       TOOL_COST,
-      "mcp-typescript-docs",
+      "tsmcpdocs",
       TOOL_NAME,
       { query: query.substring(0, 100) },
       processed.substring(0, 200) + '...',
@@ -957,7 +957,7 @@ function jsonError(message: string, status: number): Response {
 
   // RFC 9728: Add WWW-Authenticate header for 401 Unauthorized responses
   if (status === 401) {
-    const baseUrl = 'https://mcp-typescript-docs.wtyczki.ai';
+    const baseUrl = 'https://tsmcpdocs.wtyczki.ai';
 
     headers["WWW-Authenticate"] = [
       'Bearer',
