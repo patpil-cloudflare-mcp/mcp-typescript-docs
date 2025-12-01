@@ -398,7 +398,7 @@ async function getOrCreateServer(
         return {
           content: [{
             type: "text" as const,
-            text: JSON.stringify(output, null, 2)
+            text: processed  // Return answer directly, avoid double JSON encoding
           }],
           structuredContent: output
         };
@@ -803,7 +803,7 @@ async function executeSearchMcpDocsTool(
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(output, null, 2)
+        text: processed  // Return answer directly, avoid double JSON encoding
       }],
       structuredContent: output
     };

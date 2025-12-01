@@ -252,7 +252,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                     return {
                         content: [{
                             type: "text" as const,
-                            text: JSON.stringify(output, null, 2)
+                            text: processed  // Return answer directly, avoid double JSON encoding
                         }],
                         structuredContent: output
                     };
