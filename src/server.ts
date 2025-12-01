@@ -105,7 +105,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
             "search_mcp_docs",
             {
                 title: "Search MCP Docs",
-                description: "Search MCP TypeScript SDK documentation for building MCP servers and clients",
+                description: "Search official MCP TypeScript SDK documentation. Returns semantic search results for SDK architecture, tool definitions, transport layers, and code examples. Best for questions about building MCP servers and clients in TypeScript.",
                 inputSchema: {
                     query: z.string().min(1).meta({ description: "Natural language question about MCP TypeScript SDK (e.g., 'How do I define tools in an MCP server?')" }),
                 },
