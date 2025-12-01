@@ -300,7 +300,7 @@ async function getOrCreateServer(
     async ({ query }) => {
       const TOOL_COST = 1;
       const TOOL_NAME = "search_mcp_docs";
-      const RAG_NAME = "ai-search-map-docs";
+      const RAG_NAME = "map-docs";
       const actionId = crypto.randomUUID();
 
       try {
@@ -706,7 +706,7 @@ async function executeSearchMcpDocsTool(
 ): Promise<any> {
   const TOOL_COST = 1;
   const TOOL_NAME = "search_mcp_docs";
-  const RAG_NAME = "ai-search-map-docs";
+  const RAG_NAME = "map-docs";
   const actionId = crypto.randomUUID();
 
   try {

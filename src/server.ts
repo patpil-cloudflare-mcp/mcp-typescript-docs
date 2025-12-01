@@ -124,7 +124,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
             async ({ query }) => {
                 const TOOL_COST = 1; // Custom cost for MCP docs search
                 const TOOL_NAME = "search_mcp_docs";
-                const RAG_NAME = "ai-search-map-docs";
+                const RAG_NAME = "map-docs";
                 const actionId = crypto.randomUUID();
 
                 try {
