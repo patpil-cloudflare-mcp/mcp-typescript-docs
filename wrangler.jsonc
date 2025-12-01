@@ -1,0 +1,219 @@
+/**
+ * Cloudflare Workers Configuration for MCP Server
+ *
+ * This MCP server uses:
+ * - Durable Objects: Required by McpAgent for MCP protocol handling and WebSocket connections
+ * - KV Namespace: Required for OAuth token storage and session management
+ * - D1 Database: Shared token management database (mcp-tokens-database)
+ * - WorkOS Secrets: API Key and Client ID for authentication
+ *
+ * TODO: Update the following:
+ * 1. Change "name" to match your server (e.g., "weather-mcp", "news-mcp")
+ * 2. Update "new_sqlite_classes" with your McpAgent class name
+ * 3. Update "class_name" in durable_objects.bindings to match
+ * 4. Verify KV namespace IDs match CLOUDFLARE_CONFIG.md (already configured - DO NOT change)
+ * 5. Verify D1 database ID matches CLOUDFLARE_CONFIG.md (already configured - DO NOT change)
+ * 6. Add custom bindings if needed (AI, R2, additional KV/D1)
+ * 7. Run verify-consistency.sh before deployment to catch configuration errors
+ *
+ * IMPORTANT: Get all IDs from CLOUDFLARE_CONFIG.md - never create new shared resources!
+ *
+ * For more details on Wrangler configuration:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcp-typescript-docs",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-10",
+  "compatibility_flags": ["nodejs_compat"],
+
+  /**
+   * Build configuration - forces fresh dependency installation
+   *
+   * CRITICAL: Cloudflare Workers Builds (GitHub integration) does NOT auto-run npm install.
+   * Without this, TypeScript compilation fails because node_modules/ doesn't exist.
+   *
+   * This command:
+   * 1. npm install - installs all dependencies from package.json
+   * 2. npx tsc --noEmit - validates TypeScript before deployment (catches errors early)
+   */
+  "build": {
+    "command": "npm install && npx tsc --noEmit"
+  },
+
+  /**
+   * CRITICAL: Migrations for Durable Objects
+   *
+   * McpAgent ALWAYS requires Durable Objects configuration, even for "stateless" servers.
+   * The DO is used for MCP protocol handling, WebSocket management, and session state.
+   *
+   * When you rename your McpAgent class (MixpostAiSearchMCP → YourMCP), update "new_sqlite_classes"
+   */
+  "migrations": [
+    {
+      "new_sqlite_classes": ["McpTypescriptDocsMCP"],
+      "tag": "v1"
+    }
+  ],
+
+  /**
+   * REQUIRED: Durable Object binding
+   */
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "McpTypescriptDocsMCP",
+        "name": "MCP_OBJECT"          // Binding name (used internally by McpAgent)
+      }
+    ]
+  },
+
+  /**
+   * REQUIRED for OAuth: Shared KV namespaces
+   *
+   * IMPORTANT: Use IDs from CLOUDFLARE_CONFIG.md - DO NOT create new namespaces!
+   * All MCP servers share the same KV namespaces for OAuth and caching.
+   *
+   * Required namespaces:
+   * - OAUTH_KV: OAuth token storage (shared across ALL servers)
+   * - CACHE_KV: API response caching (shared across ALL servers)
+   * - USER_SESSIONS: Centralized custom login sessions (MANDATORY for panel.wtyczki.ai auth)
+   *
+   * Get IDs from: /Users/patpil/Documents/ai-projects/Cloudflare_mcp/CLOUDFLARE_CONFIG.md
+   * Section: "## 📦 Shared KV Namespaces"
+   */
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "b77ec4c7e96043fab0c466a978c2f186",         // From CLOUDFLARE_CONFIG.md
+      "preview_id": "cf8ef9f38ab24ae583d20dd4e973810c"  // For local testing
+    },
+    {
+      "binding": "CACHE_KV",
+      "id": "fa6ff790f146478e85ea77ae4a5caa4b",         // From CLOUDFLARE_CONFIG.md
+      "preview_id": "4b37112559f2429191633d98781645ca"  // For local testing
+    },
+    {
+      "binding": "USER_SESSIONS",
+      "id": "e5ad189139cd44f38ba0224c3d596c73",         // From CLOUDFLARE_CONFIG.md (MANDATORY)
+      "preview_id": "49c43fb4d6e242db87fd885ba46b5a1d"  // For local testing
+    }
+  ],
+
+  /**
+   * REQUIRED for token system: Shared D1 database
+   *
+   * Database ID: ebb389aa-2d65-4d38-a0da-50c7da9dfe8b
+   * This is the shared database used by ALL MCP servers for token management.
+   * DO NOT change this ID - it must be the same across all your MCP servers.
+   */
+  "d1_databases": [
+    {
+      "binding": "TOKEN_DB",
+      "database_name": "mcp-tokens-database",
+      "database_id": "ebb389aa-2d65-4d38-a0da-50c7da9dfe8b"
+    }
+  ],
+
+  /**
+   * Workers AI binding for AI models and AutoRAG (AI Search)
+   *
+   * This binding enables:
+   * - Workers AI model inference (@cf/meta/llama-3.3-70b-instruct-fp8-fast, etc.)
+   * - AutoRAG (AI Search) queries via env.AI.autorag("rag-name").aiSearch()
+   *
+   * Setup for AutoRAG:
+   * 1. Create an AI Search instance in Cloudflare dashboard
+   * 2. Connect data source (R2 bucket or website)
+   * 3. Wait for indexing to complete
+   * 4. Use env.AI.autorag("your-rag-name").aiSearch({ query: "..." })
+   *
+   * Documentation:
+   * - AutoRAG: https://developers.cloudflare.com/ai-search/
+   * - Workers AI: https://developers.cloudflare.com/workers-ai/
+   */
+  "ai": {
+    "binding": "AI"
+  },
+
+  /**
+   * OPTIONAL: R2 bucket binding for file storage
+   *
+   * Uncomment and configure if you need R2:
+   */
+  // "r2_buckets": [
+  //   {
+  //     "binding": "MY_BUCKET",
+  //     "bucket_name": "your-bucket-name"
+  //   }
+  // ],
+
+  /**
+   * OPTIONAL: Additional KV namespaces
+   *
+   * Example configuration (ONLY uncomment and customize if needed):
+   *
+   * STEP 1: Create namespace: wrangler kv namespace create CUSTOM_KV
+   * STEP 2: Replace <YOUR_CUSTOM_KV_ID> with actual ID from step 1
+   * STEP 3: Uncomment lines below
+   *
+   * NOTE: Commented placeholders are ignored by verify-consistency.sh
+   */
+  // "kv_namespaces": [
+  //   {
+  //     "binding": "CUSTOM_KV",
+  //     "id": "<YOUR_CUSTOM_KV_ID>"  // Replace with actual ID
+  //   }
+  // ],
+
+  /**
+   * REQUIRED: Custom Domain for production deployment
+   *
+   * Uncomment and update after deployment to add Custom Domain:
+   * Custom Domains provide:
+   * - Automatic DNS record creation
+   * - Automatic certificate management
+   * - Better dashboard organization
+   * - Can be invoked within same zone via fetch()
+   *
+   * IMPORTANT: Deploy with `wrangler deploy` to automatically create the Custom Domain
+   */
+  "routes": [
+    {
+      "pattern": "mcp-typescript-docs.wtyczki.ai",
+      "custom_domain": true
+    }
+  ],
+
+  /**
+   * SECURITY: Disable workers.dev subdomain (RECOMMENDED)
+   *
+   * Since all production traffic uses Custom Domains, the workers.dev subdomain
+   * serves no production purpose and should be disabled to minimize attack surface.
+   *
+   * Benefits:
+   * - Prevents exposure of development code via Preview URLs
+   * - Reduces reconnaissance opportunities for attackers
+   * - Aligns with security best practices (as of wrangler v4.44.0+)
+   *
+   * Note: Disabling workers.dev also disables Preview URLs by default.
+   * If you need Preview URLs for development, keep workers_dev: true and
+   * enable Cloudflare Access to restrict access to authorized users.
+   */
+  "workers_dev": false,
+
+  /**
+   * RECOMMENDED: Enable observability for debugging
+   */
+  "observability": {
+    "enabled": true
+  },
+
+  /**
+   * OPTIONAL: Local development port
+   */
+  "dev": {
+    "port": 8787
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "mcp-typescript-docs",
+  "version": "1.0.0",
+  "description": "Mcp Typescript Docs M C P - Semantic search over Model Context Protocol (MCP) TypeScript SDK documentation from GitHub",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "type-check": "tsc --noEmit",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.20.1",
+    "@workos-inc/node": "^7.70.0",
+    "agents": "^0.2.14",
+    "hono": "^4.10.3",
+    "jose": "^6.1.0",
+    "pilpat-mcp-security": "^1.1.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.45.4"
+  }
+}
