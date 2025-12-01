@@ -23,7 +23,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tsmcpdocs",
+  "name": "mcp-typescript-docs",
   "main": "src/index.ts",
   "compatibility_date": "2025-03-10",
   "compatibility_flags": ["nodejs_compat"],
