@@ -79,7 +79,10 @@ export default {
             // server location and required scopes.
 
             // Protected Resource Metadata (primary discovery endpoint)
-            if (url.pathname === '/.well-known/oauth-protected-resource') {
+            // RFC 9728: Also handle path-based resource lookup (e.g., /.well-known/oauth-protected-resource/mcp)
+            if (url.pathname === '/.well-known/oauth-protected-resource' ||
+                url.pathname === '/.well-known/oauth-protected-resource/mcp' ||
+                url.pathname === '/.well-known/oauth-protected-resource/sse') {
                 return new Response(JSON.stringify({
                     resource: `${url.origin}/mcp`,
                     authorization_servers: [
