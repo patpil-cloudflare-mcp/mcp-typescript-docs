@@ -86,7 +86,7 @@ export default {
                 return new Response(JSON.stringify({
                     resource: `${url.origin}/mcp`,
                     authorization_servers: [
-                        "https://api.workos.com"  // WorkOS authorization server
+                        url.origin  // Our server handles OAuth (proxies to WorkOS)
                     ],
                     bearer_methods_supported: ["header"],
                     scopes_supported: ["mcp:read", "mcp:write"],
@@ -106,7 +106,7 @@ export default {
             // Authorization Server Metadata (OAuth 2.0 discovery)
             if (url.pathname === '/.well-known/oauth-authorization-server') {
                 return new Response(JSON.stringify({
-                    issuer: "https://api.workos.com",
+                    issuer: url.origin,
                     authorization_endpoint: `${url.origin}/authorize`,
                     token_endpoint: `${url.origin}/token`,
                     registration_endpoint: `${url.origin}/register`,
