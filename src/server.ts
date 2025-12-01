@@ -44,7 +44,7 @@ function hasPotentialPII(text: string): boolean {
 }
 
 /**
- * Mcp Typescript Docs M C P with Token Integration
+ * MCP TypeScript Docs Server with Token Integration
  *
  * This server provides secure, token-based access to the Model Context Protocol (MCP) TypeScript SDK documentation from GitHub
  * indexed in the ai-search-map-docs AI Search instance.
@@ -66,7 +66,7 @@ function hasPotentialPII(text: string): boolean {
 export class McpTypescriptDocsMCP extends McpAgent<Env, unknown, Props> {
     server = new McpServer(
         {
-            name: "Mcp Typescript Docs M C P",
+            name: "MCP TypeScript Docs",
             version: "1.0.0",
         },
         {

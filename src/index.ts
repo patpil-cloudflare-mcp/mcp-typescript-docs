@@ -8,7 +8,7 @@ import type { Env } from "./types";
 export { McpTypescriptDocsMCP };
 
 /**
- * Mcp Typescript Docs M C P with Dual Authentication Support
+ * MCP TypeScript Docs Server with Dual Authentication Support
  *
  * This MCP server supports TWO authentication methods:
  *

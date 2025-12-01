@@ -1,7 +1,7 @@
 {
-  "name": "tsmcpdocs",
+  "name": "mcp-typescript-docs",
   "version": "1.0.0",
-  "description": "Mcp Typescript Docs M C P - Semantic search over Model Context Protocol (MCP) TypeScript SDK documentation from GitHub",
+  "description": "MCP TypeScript Docs - Semantic search over Model Context Protocol (MCP) TypeScript SDK documentation from GitHub",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",

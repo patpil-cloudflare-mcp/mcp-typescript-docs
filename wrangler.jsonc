@@ -23,7 +23,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tsmcpdocs",
+  "name": "mcp-typescript-docs",
   "main": "src/index.ts",
   "compatibility_date": "2025-03-10",
   "compatibility_flags": ["nodejs_compat"],
@@ -48,7 +48,7 @@
    * McpAgent ALWAYS requires Durable Objects configuration, even for "stateless" servers.
    * The DO is used for MCP protocol handling, WebSocket management, and session state.
    *
-   * When you rename your McpAgent class (MixpostAiSearchMCP → YourMCP), update "new_sqlite_classes"
+   * When you rename your McpAgent class, update "new_sqlite_classes" accordingly
    */
   "migrations": [
     {
