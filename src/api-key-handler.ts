@@ -1,5 +1,5 @@
 /**
- * API Key Authentication Handler for {{KNOWLEDGE_BASE_NAME}} AI Search MCP
+ * API Key Authentication Handler for MCP TypeScript SDK AI Search MCP
  *
  * This module provides API key authentication support for MCP clients that don't support
  * OAuth flows (like AnythingLLM, Cursor IDE, custom scripts).
@@ -266,7 +266,7 @@ async function getOrCreateServer(
 
   // Create new MCP server
   const server = new McpServer({
-    name: "Crawl4AI Documentation AI Search MCP (API Key)",
+    name: "MCP TypeScript SDK AI Search MCP (API Key)",
     version: "1.0.0",
   });
 
@@ -275,15 +275,15 @@ async function getOrCreateServer(
   // DO NOT uncomment until you have actual API client methods implemented
 
   // ========================================================================
-  // Tool: Search Crawl4AI Documentation (3 token cost)
+  // Tool: Search MCP TypeScript SDK Documentation (1 token cost)
   // ========================================================================
   server.registerTool(
-    "search_crawl4ai_docs",
+    "search_mcp_docs",
     {
-      title: "Search {{KNOWLEDGE_BASE_NAME}}",
-      description: "{{TOOL_DESCRIPTION}}",
+      title: "Search MCP Docs",
+      description: "Search MCP TypeScript SDK documentation for building MCP servers and clients",
       inputSchema: {
-        query: z.string().min(1).meta({ description: "Natural language question about {{KNOWLEDGE_BASE_NAME}} (e.g., '{{TOOL_PARAM_EXAMPLE}}')" }),
+        query: z.string().min(1).meta({ description: "Natural language question about MCP TypeScript SDK (e.g., 'How do I define tools in an MCP server?')" }),
       },
       outputSchema: z.object({
         success: z.boolean(),
@@ -298,9 +298,9 @@ async function getOrCreateServer(
       })
     },
     async ({ query }) => {
-      const TOOL_COST = 3;
-      const TOOL_NAME = "search_crawl4ai_docs";
-      const RAG_NAME = "crawl4ai";
+      const TOOL_COST = 1;
+      const TOOL_NAME = "search_mcp_docs";
+      const RAG_NAME = "ai-search-map-docs";
       const actionId = crypto.randomUUID();
 
       try {
@@ -376,7 +376,7 @@ async function getOrCreateServer(
           env.TOKEN_DB,
           userId,
           TOOL_COST,
-          "{{SERVER_NAME}}",
+          "mcp-typescript-docs",
           TOOL_NAME,
           { query: query.substring(0, 100) },
           processed.substring(0, 200) + '...',
@@ -420,7 +420,7 @@ async function getOrCreateServer(
           return {
             content: [{
               type: "text" as const,
-              text: "Crawl4AI documentation is still indexing. Please try again in a few minutes."
+              text: "MCP TypeScript SDK documentation is still indexing. Please try again in a few minutes."
             }],
             isError: true,
           };
@@ -430,7 +430,7 @@ async function getOrCreateServer(
         return {
           content: [{
             type: "text" as const,
-            text: `Failed to search Crawl4AI documentation: ${errorMessage}`
+            text: `Failed to search MCP TypeScript SDK documentation: ${errorMessage}`
           }],
           isError: true,
         };
@@ -559,7 +559,7 @@ function handleInitialize(request: {
       tools: {},
     },
     serverInfo: {
-      name: "Mixpost AI Search MCP", // TODO: Update server name
+      name: "MCP TypeScript SDK AI Search MCP",
       version: "1.0.0",
     },
   });
@@ -597,17 +597,16 @@ async function handleToolsList(
 
   // Manually define tools since McpServer doesn't expose listTools()
   // These match the tools registered in getOrCreateServer()
-  // TODO: Update this when you add new tools!
   const tools = [
     {
-      name: "search_crawl4ai_docs",
-      description: "{{TOOL_DESCRIPTION}}",
+      name: "search_mcp_docs",
+      description: "Search MCP TypeScript SDK documentation for building MCP servers and clients",
       inputSchema: {
         type: "object",
         properties: {
           query: {
             type: "string",
-            description: "Natural language question about {{KNOWLEDGE_BASE_NAME}} (e.g., '{{TOOL_PARAM_EXAMPLE}}')"
+            description: "Natural language question about MCP TypeScript SDK (e.g., 'How do I define tools in an MCP server?')"
           }
         },
         required: ["query"]
@@ -676,10 +675,9 @@ async function handleToolsCall(
 
     let result: any;
 
-    // TODO: Add cases for your tools here!
     switch (toolName) {
-      case "search_crawl4ai_docs":
-        result = await executeSearchCrawl4aiDocsTool(userId, toolArgs, env);
+      case "search_mcp_docs":
+        result = await executeSearchMcpDocsTool(userId, toolArgs, env);
         break;
 
       default:
@@ -701,14 +699,14 @@ async function handleToolsCall(
   }
 }
 
-async function executeSearchCrawl4aiDocsTool(
+async function executeSearchMcpDocsTool(
   userId: string,
   args: any,
   env: Env
 ): Promise<any> {
-  const TOOL_COST = 3;
-  const TOOL_NAME = "search_crawl4ai_docs";
-  const RAG_NAME = "crawl4ai";
+  const TOOL_COST = 1;
+  const TOOL_NAME = "search_mcp_docs";
+  const RAG_NAME = "ai-search-map-docs";
   const actionId = crypto.randomUUID();
 
   try {
@@ -783,7 +781,7 @@ async function executeSearchCrawl4aiDocsTool(
       env.TOKEN_DB,
       userId,
       TOOL_COST,
-      "{{SERVER_NAME}}",
+      "mcp-typescript-docs",
       TOOL_NAME,
       { query: query.substring(0, 100) },
       processed.substring(0, 200) + '...',
@@ -827,7 +825,7 @@ async function executeSearchCrawl4aiDocsTool(
       return {
         content: [{
           type: "text",
-          text: "Crawl4AI documentation is still indexing. Please try again in a few minutes."
+          text: "MCP TypeScript SDK documentation is still indexing. Please try again in a few minutes."
         }],
         isError: true
       };
@@ -837,7 +835,7 @@ async function executeSearchCrawl4aiDocsTool(
     return {
       content: [{
         type: "text",
-        text: `Failed to search Crawl4AI documentation: ${errorMessage}`
+        text: `Failed to search MCP TypeScript SDK documentation: ${errorMessage}`
       }],
       isError: true
     };
@@ -959,8 +957,7 @@ function jsonError(message: string, status: number): Response {
 
   // RFC 9728: Add WWW-Authenticate header for 401 Unauthorized responses
   if (status === 401) {
-    // Template variable will be substituted during generation
-    const baseUrl = 'https://{{SERVER_NAME}}.wtyczki.workers.dev';
+    const baseUrl = 'https://mcp-typescript-docs.wtyczki.ai';
 
     headers["WWW-Authenticate"] = [
       'Bearer',
