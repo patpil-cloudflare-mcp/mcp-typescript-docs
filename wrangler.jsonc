@@ -39,7 +39,7 @@
    * 2. npx tsc --noEmit - validates TypeScript before deployment (catches errors early)
    */
   "build": {
-    "command": "npm install && npx tsc --noEmit"
+    "command": "npm install && node node_modules/typescript/lib/tsc.js --noEmit"
   },
 
   /**
