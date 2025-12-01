@@ -142,16 +142,14 @@ app.get("/authorize", async (c) => {
     }
 
     // ============================================================
-    // STEP 2: If no session, fall through to WorkOS (skip centralized login for now)
+    // STEP 2: If no session, redirect to centralized custom login
     // ============================================================
-    // NOTE: Centralized login disabled - using direct WorkOS AuthKit
-    // To re-enable: uncomment the redirect below
-    // if (!sessionToken && c.env.USER_SESSIONS) {
-    //     console.log('🔐 [OAuth] No session found, redirecting to centralized custom login');
-    //     const loginUrl = new URL('https://panel.wtyczki.ai/auth/login-custom');
-    //     loginUrl.searchParams.set('return_to', c.req.url);
-    //     return Response.redirect(loginUrl.toString(), 302);
-    // }
+    if (!sessionToken && c.env.USER_SESSIONS) {
+        console.log('🔐 [OAuth] No session found, redirecting to centralized custom login');
+        const loginUrl = new URL('https://panel.wtyczki.ai/auth/login-custom');
+        loginUrl.searchParams.set('return_to', c.req.url);
+        return Response.redirect(loginUrl.toString(), 302);
+    }
 
     // ============================================================
     // STEP 3: Validate session if present
