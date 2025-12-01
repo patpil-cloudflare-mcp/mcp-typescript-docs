@@ -71,67 +71,6 @@ export default {
             const url = new URL(request.url);
             const authHeader = request.headers.get("Authorization");
 
-            // =================================================================
-            // RFC 9728: OAuth 2.0 Protected Resource Metadata
-            // =================================================================
-            // Auto-discovery endpoints for OAuth 2.1 compliance
-            // These enable MCP clients to automatically discover authorization
-            // server location and required scopes.
-
-            // Protected Resource Metadata (primary discovery endpoint)
-            // RFC 9728: Also handle path-based resource lookup (e.g., /.well-known/oauth-protected-resource/mcp)
-            if (url.pathname === '/.well-known/oauth-protected-resource' ||
-                url.pathname === '/.well-known/oauth-protected-resource/mcp' ||
-                url.pathname === '/.well-known/oauth-protected-resource/sse') {
-                return new Response(JSON.stringify({
-                    resource: `${url.origin}/mcp`,
-                    authorization_servers: [
-                        url.origin  // Our server handles OAuth (proxies to WorkOS)
-                    ],
-                    bearer_methods_supported: ["header"],
-                    scopes_supported: ["mcp:read", "mcp:write"],
-                    resource_documentation: "https://wtyczki.ai/docs/mcp-typescript-docs",
-                    resource_policy_uri: "https://wtyczki.ai/privacy"
-                }), {
-                    status: 200,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                        'Cache-Control': 'public, max-age=86400'  // 24 hours
-                    }
-                });
-            }
-
-            // Authorization Server Metadata (OAuth 2.0 discovery)
-            if (url.pathname === '/.well-known/oauth-authorization-server') {
-                return new Response(JSON.stringify({
-                    issuer: url.origin,
-                    authorization_endpoint: `${url.origin}/authorize`,
-                    token_endpoint: `${url.origin}/token`,
-                    registration_endpoint: `${url.origin}/register`,
-                    jwks_uri: "https://api.workos.com/.well-known/jwks.json",
-                    response_types_supported: ["code"],
-                    grant_types_supported: ["authorization_code"],
-                    code_challenge_methods_supported: ["S256"],  // PKCE OAuth 2.1
-                    token_endpoint_auth_methods_supported: [
-                        "client_secret_basic",
-                        "client_secret_post"
-                    ],
-                    scopes_supported: ["mcp:read", "mcp:write"],
-                    service_documentation: "https://wtyczki.ai/docs/oauth",
-                    ui_locales_supported: ["en-US", "pl-PL"]
-                }), {
-                    status: 200,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                        'Cache-Control': 'public, max-age=86400'  // 24 hours
-                    }
-                });
-            }
-
             // Check for API key authentication on MCP endpoints
             if (isApiKeyRequest(url.pathname, authHeader)) {
                 console.log(`🔐 [Dual Auth] API key request detected: ${url.pathname}`);
