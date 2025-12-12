@@ -284,7 +284,7 @@ async function getOrCreateServer(
       title: TOOL_TITLES.SEARCH_MCP_DOCS,
       description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS,
       inputSchema: {
-        query: z.string().min(1).describe(PARAM_DESCRIPTIONS.QUERY),
+        query: z.string().min(1).meta({ description: PARAM_DESCRIPTIONS.QUERY }),
       },
       outputSchema: z.object({
         success: z.boolean(),

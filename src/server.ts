@@ -112,7 +112,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                 title: TOOL_TITLES.SEARCH_MCP_DOCS,
                 description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS,
                 inputSchema: {
-                    query: z.string().min(1).describe(PARAM_DESCRIPTIONS.QUERY),
+                    query: z.string().min(1).meta({ description: PARAM_DESCRIPTIONS.QUERY }),
                 },
                 outputSchema: z.object({
                     success: z.boolean(),
@@ -315,7 +315,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                     topic: z.string()
                         .min(2)
                         .max(200)
-                        .describe("Topic or concept to search (e.g., 'tool registration', 'OAuth flow', 'Durable Objects')")
+                        .meta({ description: "Topic or concept to search (e.g., 'tool registration', 'OAuth flow', 'Durable Objects')" })
                 }
             },
             async ({ topic }) => ({
@@ -339,7 +339,7 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                     feature: z.string()
                         .min(2)
                         .max(200)
-                        .describe("MCP feature or API needing code example (e.g., 'registerTool', 'McpAgent', 'structuredContent')")
+                        .meta({ description: "MCP feature or API needing code example (e.g., 'registerTool', 'McpAgent', 'structuredContent')" })
                 }
             },
             async ({ feature }) => ({
