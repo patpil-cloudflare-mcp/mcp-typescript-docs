@@ -28,6 +28,7 @@ import { ApiClient } from "./api-client";
 import { checkBalance, consumeTokensWithRetry } from "./tokenConsumption";
 import { formatInsufficientTokensError, formatAccountDeletedError } from "./tokenUtils";
 import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';
+import { TOOL_DESCRIPTIONS, TOOL_TITLES, PARAM_DESCRIPTIONS } from './tool-descriptions';
 
 /**
  * Simple LRU (Least Recently Used) Cache for MCP Server instances
@@ -280,10 +281,10 @@ async function getOrCreateServer(
   server.registerTool(
     "search_mcp_docs",
     {
-      title: "Search MCP Docs",
-      description: "Search official MCP TypeScript SDK documentation. Returns semantic search results for SDK architecture, tool definitions, transport layers, and code examples. Best for questions about building MCP servers and clients in TypeScript.",
+      title: TOOL_TITLES.SEARCH_MCP_DOCS,
+      description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS,
       inputSchema: {
-        query: z.string().min(1).meta({ description: "Natural language question about MCP TypeScript SDK (e.g., 'How do I define tools in an MCP server?')" }),
+        query: z.string().min(1).describe(PARAM_DESCRIPTIONS.QUERY),
       },
       outputSchema: z.object({
         success: z.boolean(),
@@ -600,13 +601,13 @@ async function handleToolsList(
   const tools = [
     {
       name: "search_mcp_docs",
-      description: "Search official MCP TypeScript SDK documentation. Returns semantic search results for SDK architecture, tool definitions, transport layers, and code examples. Best for questions about building MCP servers and clients in TypeScript.",
+      description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS,
       inputSchema: {
         type: "object",
         properties: {
           query: {
             type: "string",
-            description: "Natural language question about MCP TypeScript SDK (e.g., 'How do I define tools in an MCP server?')"
+            description: PARAM_DESCRIPTIONS.QUERY
           }
         },
         required: ["query"]

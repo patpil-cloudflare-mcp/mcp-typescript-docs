@@ -6,6 +6,7 @@ import type { Props } from "./props";
 import { checkBalance, consumeTokensWithRetry } from "./tokenConsumption";
 import { formatInsufficientTokensError } from "./tokenUtils";
 import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';
+import { TOOL_DESCRIPTIONS, TOOL_TITLES, PARAM_DESCRIPTIONS } from './tool-descriptions';
 
 /**
  * Fast heuristic check for potential PII patterns
@@ -70,6 +71,10 @@ export class McpTypescriptDocsMCP extends McpAgent<Env, unknown, Props> {
             version: "1.0.0",
         },
         {
+            capabilities: {
+                tools: {},
+                prompts: { listChanged: true }  // Required for prompt support
+            },
             instructions: `
 MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript SDK documentation from GitHub
 
@@ -104,10 +109,10 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
         this.server.registerTool(
             "search_mcp_docs",
             {
-                title: "Search MCP Docs",
-                description: "Search official MCP TypeScript SDK documentation. Returns semantic search results for SDK architecture, tool definitions, transport layers, and code examples. Best for questions about building MCP servers and clients in TypeScript.",
+                title: TOOL_TITLES.SEARCH_MCP_DOCS,
+                description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS,
                 inputSchema: {
-                    query: z.string().min(1).meta({ description: "Natural language question about MCP TypeScript SDK (e.g., 'How do I define tools in an MCP server?')" }),
+                    query: z.string().min(1).describe(PARAM_DESCRIPTIONS.QUERY),
                 },
                 outputSchema: z.object({
                     success: z.boolean(),
@@ -293,6 +298,59 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                     };
                 }
             }
+        );
+
+        // ========================================================================
+        // PROMPT REGISTRATION: SDK 1.20+ registerPrompt() Pattern
+        // Progressive complexity: Core prompt first, enhanced workflow second
+        // ========================================================================
+
+        // Prompt 1: Core Function (simple, direct)
+        this.server.registerPrompt(
+            "search-docs",
+            {
+                title: "Search MCP SDK Documentation",
+                description: "Search the official MCP TypeScript SDK documentation for a specific topic or concept.",
+                argsSchema: {
+                    topic: z.string()
+                        .min(2)
+                        .max(200)
+                        .describe("Topic or concept to search (e.g., 'tool registration', 'OAuth flow', 'Durable Objects')")
+                }
+            },
+            async ({ topic }) => ({
+                messages: [{
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `Please use the 'search_mcp_docs' tool to find information about: ${topic}`
+                    }
+                }]
+            })
+        );
+
+        // Prompt 2: Enhanced Workflow (adds context for code examples)
+        this.server.registerPrompt(
+            "find-code-example",
+            {
+                title: "Find Code Example",
+                description: "Search for TypeScript code examples and implementation patterns in MCP SDK documentation.",
+                argsSchema: {
+                    feature: z.string()
+                        .min(2)
+                        .max(200)
+                        .describe("MCP feature or API needing code example (e.g., 'registerTool', 'McpAgent', 'structuredContent')")
+                }
+            },
+            async ({ feature }) => ({
+                messages: [{
+                    role: "user",
+                    content: {
+                        type: "text",
+                        text: `Please use the 'search_mcp_docs' tool to find TypeScript code examples for: ${feature}. Focus on implementation patterns and best practices.`
+                    }
+                }]
+            })
         );
     }
 }
