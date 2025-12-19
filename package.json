@@ -16,7 +16,6 @@
     "agents": "^0.2.14",
     "hono": "^4.10.3",
     "jose": "^6.1.0",
-    "pilpat-mcp-security": "^1.1.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {

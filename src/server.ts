@@ -5,44 +5,7 @@ import type { Env } from "./types";
 import type { Props } from "./props";
 import { checkBalance, consumeTokensWithRetry } from "./tokenConsumption";
 import { formatInsufficientTokensError } from "./tokenUtils";
-import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';
 import { TOOL_DESCRIPTIONS, TOOL_TITLES, PARAM_DESCRIPTIONS } from './tool-descriptions';
-
-/**
- * Fast heuristic check for potential PII patterns
- * Avoids expensive regex operations when content is clearly clean
- *
- * This function uses lightweight checks to detect if content might contain PII.
- * False positives are acceptable (will trigger full scan), but false negatives
- * are not (would skip PII redaction when needed).
- *
- * @param text Content to check for PII indicators
- * @returns true if potential PII detected (run full scan), false for clean content (skip scan)
- */
-function hasPotentialPII(text: string): boolean {
-    // Quick character-based heuristics (no regex - very fast)
-    const hasAtSymbol = text.includes('@');  // Potential email
-    const hasMultipleDashes = text.includes('---') || text.includes('--');  // Potential SSN/ID format
-    const hasMultipleDigits = (text.match(/\d/g) || []).length > 10;  // Potential phone/card numbers
-
-    // If no suspicious patterns, skip expensive PII redaction
-    if (!hasAtSymbol && !hasMultipleDashes && !hasMultipleDigits) {
-        return false;
-    }
-
-    // Lightweight regex checks for common PII patterns
-    // These patterns are simplified for speed - full patterns run in redactPII()
-    const patterns = [
-        /\d{3}[-.\s]?\d{2}[-.\s]?\d{4}/,     // SSN-like: 123-45-6789
-        /\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}/, // Credit card-like: 1234-5678-9012-3456
-        /\d{11}/,                             // PESEL-like: 11 consecutive digits
-        /\+?[\d\s()-]{10,}/,                  // Phone-like: +48 123 456 789
-        /\d{2}[-\s]?\d{4,}/,                  // Bank account patterns
-        /[A-Z]{3}\d{6}/,                      // Polish passport-like: ABC123456
-    ];
-
-    return patterns.some(pattern => pattern.test(text));
-}
 
 /**
  * MCP TypeScript Docs Server with Token Integration
@@ -110,21 +73,11 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
             "search_mcp_docs",
             {
                 title: TOOL_TITLES.SEARCH_MCP_DOCS,
-                description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS,
+                description: TOOL_DESCRIPTIONS.SEARCH_MCP_DOCS + " Returns detailed answers directly as text.",
                 inputSchema: {
                     query: z.string().min(1).meta({ description: PARAM_DESCRIPTIONS.QUERY }),
-                },
-                outputSchema: z.object({
-                    success: z.boolean(),
-                    query: z.string(),
-                    rag_instance: z.string(),
-                    security_applied: z.object({
-                        pii_redacted: z.boolean(),
-                        pii_types_found: z.array(z.string()),
-                        html_sanitized: z.boolean()
-                    }),
-                    answer: z.string()
-                })
+                }
+                // Note: No outputSchema - plain text only (Cloudflare pattern)
             },
             async ({ query }) => {
                 const TOOL_COST = 1; // Custom cost for MCP docs search
@@ -167,66 +120,6 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                         },
                     }) as { response: string };
 
-                    // 4.5. SECURITY: Sanitize and redact PII from AutoRAG output (PHASE 2)
-                    let processed = response.response;
-                    const securityPerfStart = Date.now();
-
-                    // Phase 2A: Sanitize HTML and normalize content (ALWAYS run - lightweight)
-                    processed = sanitizeOutput(processed, {
-                        removeHtml: true,
-                        removeControlChars: true,
-                        normalizeWhitespace: true,
-                        maxLength: 10000
-                    });
-
-                    // Phase 2B: Fast-path detection for clean documentation responses
-                    const needsPIIRedaction = hasPotentialPII(processed);
-
-                    let detectedPII: string[] = [];
-                    if (needsPIIRedaction) {
-                        console.log(`[Security] PII patterns detected, running full redaction`);
-
-                        // Full PII redaction (expensive)
-                        const redactionResult = redactPII(processed, {
-                            // US/International PII
-                            redactEmails: false,  // v1.1.0+ default, enable if needed
-                            redactPhones: true,
-                            redactCreditCards: true,
-                            redactSSN: true,
-                            redactBankAccounts: true,
-
-                            // Polish Market PII (Phase 2)
-                            redactPESEL: true,
-                            redactPolishIdCard: true,
-                            redactPolishPassport: true,
-                            redactPolishPhones: true,
-
-                            placeholder: '[REDACTED]'
-                        });
-                        processed = redactionResult.redacted;
-                        detectedPII = redactionResult.detectedPII;
-                    } else {
-                        console.log(`[Security] Fast-path: No PII patterns detected, skipping redaction`);
-                    }
-
-                    // Log performance and detected PII
-                    const securityDuration = Date.now() - securityPerfStart;
-                    console.log(`[Security] Processing took ${securityDuration}ms (PII scan: ${needsPIIRedaction ? 'FULL' : 'SKIPPED'})`);
-
-                    if (detectedPII.length > 0) {
-                        console.warn(`[Security] Tool ${TOOL_NAME}: Redacted PII types:`, detectedPII);
-                    }
-
-                    // Phase 2C: Validate output before returning
-                    const validation = validateOutput(processed, {
-                        maxLength: 10000,
-                        expectedType: 'string'
-                    });
-
-                    if (!validation.valid) {
-                        throw new Error(`Output validation failed: ${validation.errors.join(', ')}`);
-                    }
-
                     // 5. Consume tokens WITH RETRY and idempotency protection
                     await consumeTokensWithRetry(
                         this.env.TOKEN_DB,
@@ -237,29 +130,19 @@ MCP TypeScript SDK - Semantic search for Model Context Protocol (MCP) TypeScript
                         {
                             query: query.substring(0, 100)
                         },
-                        processed.substring(0, 200) + '...', // Log truncated result
+                        response.response.substring(0, 200) + '...', // Log truncated result
                         true,
                         actionId
                     );
 
-                    // 6. Return securely processed AutoRAG result with structuredContent
-                    const output = {
-                        success: true,
-                        query,
-                        rag_instance: RAG_NAME,
-                        security_applied: {
-                            pii_redacted: detectedPII.length > 0,
-                            pii_types_found: detectedPII,
-                            html_sanitized: true
-                        },
-                        answer: processed
-                    };
+                    // 6. Return AutoRAG result as plain text
+                    // Note: Plain text only (no outputSchema or structuredContent)
+                    // Follows Cloudflare pattern and prevents MCP validation errors
                     return {
                         content: [{
                             type: "text" as const,
-                            text: processed  // Return answer directly, avoid double JSON encoding
-                        }],
-                        structuredContent: output
+                            text: response.response  // Return answer directly as plain text
+                        }]
                     };
                 } catch (error) {
                     // Error handling

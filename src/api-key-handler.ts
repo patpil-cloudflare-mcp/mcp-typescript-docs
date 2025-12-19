@@ -27,7 +27,6 @@ import * as z from "zod/v4";
 import { ApiClient } from "./api-client";
 import { checkBalance, consumeTokensWithRetry } from "./tokenConsumption";
 import { formatInsufficientTokensError, formatAccountDeletedError } from "./tokenUtils";
-import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';
 import { TOOL_DESCRIPTIONS, TOOL_TITLES, PARAM_DESCRIPTIONS } from './tool-descriptions';
 
 /**
@@ -337,42 +336,6 @@ async function getOrCreateServer(
           },
         }) as { response: string };
 
-        let processed = response.response;
-
-        processed = sanitizeOutput(processed, {
-          removeHtml: true,
-          removeControlChars: true,
-          normalizeWhitespace: true,
-          maxLength: 10000
-        });
-
-        const { redacted, detectedPII } = redactPII(processed, {
-          redactEmails: false,
-          redactPhones: true,
-          redactCreditCards: true,
-          redactSSN: true,
-          redactBankAccounts: true,
-          redactPESEL: true,
-          redactPolishIdCard: true,
-          redactPolishPassport: true,
-          redactPolishPhones: true,
-          placeholder: '[REDACTED]'
-        });
-        processed = redacted;
-
-        if (detectedPII.length > 0) {
-          console.warn(`[Security] Tool ${TOOL_NAME}: Redacted PII types:`, detectedPII);
-        }
-
-        const validation = validateOutput(processed, {
-          maxLength: 10000,
-          expectedType: 'string'
-        });
-
-        if (!validation.valid) {
-          throw new Error(`Output validation failed: ${validation.errors.join(', ')}`);
-        }
-
         await consumeTokensWithRetry(
           env.TOKEN_DB,
           userId,
@@ -380,28 +343,16 @@ async function getOrCreateServer(
           "tsmcpdocs",
           TOOL_NAME,
           { query: query.substring(0, 100) },
-          processed.substring(0, 200) + '...',
+          response.response.substring(0, 200) + '...',
           true,
           actionId
         );
 
-        const output = {
-          success: true,
-          query,
-          rag_instance: RAG_NAME,
-          security_applied: {
-            pii_redacted: detectedPII.length > 0,
-            pii_types_found: detectedPII,
-            html_sanitized: true
-          },
-          answer: processed
-        };
         return {
           content: [{
             type: "text" as const,
-            text: processed  // Return answer directly, avoid double JSON encoding
-          }],
-          structuredContent: output
+            text: response.response  // Return answer directly as plain text
+          }]
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -742,42 +693,6 @@ async function executeSearchMcpDocsTool(
       },
     }) as { response: string };
 
-    let processed = response.response;
-
-    processed = sanitizeOutput(processed, {
-      removeHtml: true,
-      removeControlChars: true,
-      normalizeWhitespace: true,
-      maxLength: 10000
-    });
-
-    const { redacted, detectedPII } = redactPII(processed, {
-      redactEmails: false,
-      redactPhones: true,
-      redactCreditCards: true,
-      redactSSN: true,
-      redactBankAccounts: true,
-      redactPESEL: true,
-      redactPolishIdCard: true,
-      redactPolishPassport: true,
-      redactPolishPhones: true,
-      placeholder: '[REDACTED]'
-    });
-    processed = redacted;
-
-    if (detectedPII.length > 0) {
-      console.warn(`[Security] Tool ${TOOL_NAME}: Redacted PII types:`, detectedPII);
-    }
-
-    const validation = validateOutput(processed, {
-      maxLength: 10000,
-      expectedType: 'string'
-    });
-
-    if (!validation.valid) {
-      throw new Error(`Output validation failed: ${validation.errors.join(', ')}`);
-    }
-
     await consumeTokensWithRetry(
       env.TOKEN_DB,
       userId,
@@ -785,28 +700,16 @@ async function executeSearchMcpDocsTool(
       "tsmcpdocs",
       TOOL_NAME,
       { query: query.substring(0, 100) },
-      processed.substring(0, 200) + '...',
+      response.response.substring(0, 200) + '...',
       true,
       actionId
     );
 
-    const output = {
-      success: true,
-      query,
-      rag_instance: RAG_NAME,
-      security_applied: {
-        pii_redacted: detectedPII.length > 0,
-        pii_types_found: detectedPII,
-        html_sanitized: true
-      },
-      answer: processed
-    };
     return {
       content: [{
         type: "text",
-        text: processed  // Return answer directly, avoid double JSON encoding
-      }],
-      structuredContent: output
+        text: response.response  // Return answer directly as plain text
+      }]
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
