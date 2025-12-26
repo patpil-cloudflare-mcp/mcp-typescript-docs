@@ -104,15 +104,15 @@
   /**
    * REQUIRED for token system: Shared D1 database
    *
-   * Database ID: ebb389aa-2d65-4d38-a0da-50c7da9dfe8b
+   * Database ID: eac93639-d58e-4777-82e9-f1e28113d5b2
    * This is the shared database used by ALL MCP servers for token management.
    * DO NOT change this ID - it must be the same across all your MCP servers.
    */
   "d1_databases": [
     {
       "binding": "TOKEN_DB",
-      "database_name": "mcp-tokens-database",
-      "database_id": "ebb389aa-2d65-4d38-a0da-50c7da9dfe8b"
+      "database_name": "mcp-oauth",
+      "database_id": "eac93639-d58e-4777-82e9-f1e28113d5b2"
     }
   ],
 
