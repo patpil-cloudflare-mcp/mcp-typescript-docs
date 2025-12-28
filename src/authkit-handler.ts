@@ -4,7 +4,7 @@ import * as jose from "jose";
 import { type AccessToken, type AuthenticationResponse, WorkOS } from "@workos-inc/node";
 import type { Env } from "./types";
 import type { Props } from "./props";
-import { getUserByEmail, formatPurchaseRequiredPage, formatAccountDeletedPage, formatOAuthSuccessPage } from "./tokenUtils";
+import { getUserByEmail, formatOAuthSuccessPage } from "./tokenUtils";
 
 /**
  * PKCE (Proof Key for Code Exchange) - OAuth 2.1 Requirement
@@ -191,12 +191,12 @@ app.get("/authorize", async (c) => {
 
         if (!dbUser) {
             console.log(`❌ [OAuth] User not found in database: ${session.email}`);
-            return c.html(formatPurchaseRequiredPage(session.email), 403);
+            return c.text('User not found in database', 403);
         }
 
         if (dbUser.is_deleted === 1) {
             console.log(`❌ [OAuth] Account deleted: ${session.email}`);
-            return c.html(formatAccountDeletedPage(), 403);
+            return c.text('Account has been deleted', 403);
         }
 
         // ============================================================
@@ -325,20 +325,20 @@ app.get("/callback", async (c) => {
     console.log(`[MCP OAuth] Checking if user exists in database: ${user.email}`);
     const dbUser = await getUserByEmail(c.env.TOKEN_DB, user.email);
 
-    // If user not found in database, reject authorization and show purchase page
+    // If user not found in database, reject authorization
     if (!dbUser) {
-        console.log(`[MCP OAuth] ❌ User not found in database: ${user.email} - Tokens required`);
-        return c.html(formatPurchaseRequiredPage(user.email), 403);
+        console.log(`[MCP OAuth] ❌ User not found in database: ${user.email}`);
+        return c.text('User not found in database', 403);
     }
 
     // SECURITY FIX: Defensive check for deleted accounts (belt-and-suspenders approach)
     // This provides defense-in-depth even if getUserByEmail() query is modified
     if (dbUser.is_deleted === 1) {
         console.log(`[MCP OAuth] ❌ Account deleted: ${user.email} (user_id: ${dbUser.user_id})`);
-        return c.html(formatAccountDeletedPage(), 403);
+        return c.text('Account has been deleted', 403);
     }
 
-    console.log(`[MCP OAuth] ✅ User found in database: ${dbUser.user_id}, balance: ${dbUser.current_token_balance} tokens`);
+    console.log(`[MCP OAuth] ✅ User found in database: ${dbUser.user_id}`);
 
     // Complete OAuth flow and get redirect URL back to MCP client
     const { redirectTo } = await c.env.OAUTH_PROVIDER.completeAuthorization({

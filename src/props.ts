@@ -27,7 +27,7 @@ export interface Props {
     organizationId?: string;
 
     // Database user data (populated during OAuth callback)
-    /** User ID from mcp-tokens-database (primary key for token management) */
+    /** User ID from mcp-oauth database (primary key for user management) */
     userId: string;
 
     /** User email address (from WorkOS, used to query database) */

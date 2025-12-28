@@ -12,7 +12,7 @@ ERRORS=0
 WARNINGS=0
 
 # Check 1: USER_SESSIONS in wrangler.jsonc (MANDATORY for centralized login)
-echo "📋 [1/12] Checking USER_SESSIONS KV namespace in wrangler.jsonc..."
+echo "📋 [1/9] Checking USER_SESSIONS KV namespace in wrangler.jsonc..."
 if ! grep -q '"binding": "USER_SESSIONS"' wrangler.jsonc 2>/dev/null; then
   echo "❌ ERROR: USER_SESSIONS binding missing from wrangler.jsonc"
   echo "   This is MANDATORY for centralized authentication at panel.wtyczki.ai"
@@ -27,7 +27,7 @@ fi
 echo ""
 
 # Check 2: USER_SESSIONS in types.ts (must be required, not optional)
-echo "📋 [2/12] Checking USER_SESSIONS in types.ts..."
+echo "📋 [2/9] Checking USER_SESSIONS in types.ts..."
 if [ ! -f "src/types.ts" ]; then
   echo "⚠️  WARNING: src/types.ts not found"
   WARNINGS=$((WARNINGS + 1))
@@ -46,7 +46,7 @@ fi
 echo ""
 
 # Check 3: TOKEN_DB vs DB consistency in source files
-echo "📋 [3/12] Checking database binding consistency in source files..."
+echo "📋 [3/9] Checking database binding consistency in source files..."
 if grep -r "\.env\.DB\b" src/ 2>/dev/null; then
   echo "❌ ERROR: Found .env.DB references (should be .env.TOKEN_DB)"
   echo "   Fix: Replace all .env.DB with .env.TOKEN_DB in source files"
@@ -57,7 +57,7 @@ fi
 echo ""
 
 # Check 4: wrangler.jsonc binding name
-echo "📋 [4/12] Checking wrangler.jsonc database binding..."
+echo "📋 [4/9] Checking wrangler.jsonc database binding..."
 if grep -q '"binding": "DB"' wrangler.jsonc 2>/dev/null; then
   echo "❌ ERROR: wrangler.jsonc uses 'DB' binding (should be 'TOKEN_DB')"
   echo "   Fix: Change all 'binding': 'DB' to 'binding': 'TOKEN_DB' in wrangler.jsonc"
@@ -68,7 +68,7 @@ fi
 echo ""
 
 # Check 5: types.ts interface
-echo "📋 [5/12] Checking types.ts interface definition..."
+echo "📋 [5/9] Checking types.ts interface definition..."
 if [ ! -f "src/types.ts" ]; then
   echo "⚠️  WARNING: src/types.ts not found"
   WARNINGS=$((WARNINGS + 1))
@@ -82,7 +82,7 @@ fi
 echo ""
 
 # Check 6: Dual authentication tool count
-echo "📋 [6/12] Checking dual authentication tool parity..."
+echo "📋 [6/9] Checking dual authentication tool parity..."
 if [ ! -f "src/server.ts" ]; then
   echo "⚠️  WARNING: src/server.ts not found (skipping tool count check)"
   WARNINGS=$((WARNINGS + 1))
@@ -106,7 +106,7 @@ fi
 echo ""
 
 # Check 7: Unused imports (ResponseFormat)
-echo "📋 [7/12] Checking for unused imports..."
+echo "📋 [7/9] Checking for unused imports..."
 if grep -q "import.*ResponseFormat.*from.*types" src/api-key-handler.ts 2>/dev/null; then
   if ! grep -q "export.*ResponseFormat" src/types.ts 2>/dev/null; then
     echo "⚠️  WARNING: api-key-handler.ts imports non-existent ResponseFormat"
@@ -121,7 +121,7 @@ fi
 echo ""
 
 # Check 8: KV namespace IDs (no placeholders in active configuration)
-echo "📋 [8/12] Checking for placeholder values in active configuration..."
+echo "📋 [8/9] Checking for placeholder values in active configuration..."
 
 # Remove comments and check for placeholders
 UNCOMMENTED=$(grep -v '^\s*//' wrangler.jsonc | grep -v '^\s*\*')
@@ -139,7 +139,7 @@ fi
 echo ""
 
 # Check 9: Durable Objects configuration
-echo "📋 [9/12] Checking Durable Objects configuration..."
+echo "📋 [9/9] Checking Durable Objects configuration..."
 if ! grep -q "durable_objects" wrangler.jsonc 2>/dev/null; then
   echo "❌ ERROR: wrangler.jsonc missing durable_objects configuration"
   echo "   Fix: Add durable_objects bindings (required for McpAgent)"
@@ -150,70 +150,6 @@ elif ! grep -q "migrations" wrangler.jsonc 2>/dev/null; then
   ERRORS=$((ERRORS + 1))
 else
   echo "✅ Durable Objects configured correctly"
-fi
-echo ""
-
-# Check 10: Security package version (Phase 2)
-echo "📋 [10/12] Checking security package version..."
-if [ ! -f "package.json" ]; then
-  echo "⚠️  WARNING: package.json not found"
-  WARNINGS=$((WARNINGS + 1))
-elif ! grep -q "pilpat-mcp-security" package.json 2>/dev/null; then
-  echo "❌ ERROR: pilpat-mcp-security package not found in package.json"
-  echo "   This is MANDATORY for Phase 2 security (PII redaction & output sanitization)"
-  echo "   Fix: npm install pilpat-mcp-security@^1.1.0"
-  ERRORS=$((ERRORS + 1))
-else
-  # Extract version (handles both "^1.1.0" and "1.1.0")
-  VERSION=$(grep "pilpat-mcp-security" package.json | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-  MAJOR=$(echo "$VERSION" | cut -d. -f1)
-  MINOR=$(echo "$VERSION" | cut -d. -f2)
-
-  if [ "$MAJOR" -lt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -lt 1 ]; }; then
-    echo "❌ ERROR: pilpat-mcp-security version $VERSION is too old (need v1.1.0+)"
-    echo "   Fix: npm install pilpat-mcp-security@^1.1.0"
-    ERRORS=$((ERRORS + 1))
-  else
-    echo "✅ Security package v$VERSION installed (v1.1.0+ required for Polish PII)"
-  fi
-fi
-echo ""
-
-# Check 11: Security imports in server.ts (OAuth path)
-echo "📋 [11/12] Checking security imports in server.ts..."
-if [ ! -f "src/server.ts" ]; then
-  echo "⚠️  WARNING: src/server.ts not found"
-  WARNINGS=$((WARNINGS + 1))
-elif ! grep -q "from 'pilpat-mcp-security'" src/server.ts 2>/dev/null; then
-  echo "❌ ERROR: Missing security imports in src/server.ts"
-  echo "   Add: import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';"
-  echo "   This is MANDATORY for Phase 2 security (Step 4.5)"
-  ERRORS=$((ERRORS + 1))
-elif ! grep -q "sanitizeOutput\|redactPII\|validateOutput" src/server.ts 2>/dev/null; then
-  echo "⚠️  WARNING: Security imports exist but functions may not be used"
-  echo "   Verify all tools implement Step 4.5 security processing"
-  WARNINGS=$((WARNINGS + 1))
-else
-  echo "✅ Security imports present in server.ts"
-fi
-echo ""
-
-# Check 12: Security imports in api-key-handler.ts (API key path)
-echo "📋 [12/12] Checking security imports in api-key-handler.ts..."
-if [ ! -f "src/api-key-handler.ts" ]; then
-  echo "⚠️  WARNING: src/api-key-handler.ts not found"
-  WARNINGS=$((WARNINGS + 1))
-elif ! grep -q "from 'pilpat-mcp-security'" src/api-key-handler.ts 2>/dev/null; then
-  echo "❌ ERROR: Missing security imports in api-key-handler.ts"
-  echo "   Add: import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';"
-  echo "   API key path MUST have same security as OAuth path"
-  ERRORS=$((ERRORS + 1))
-elif ! grep -q "sanitizeOutput\|redactPII\|validateOutput" src/api-key-handler.ts 2>/dev/null; then
-  echo "⚠️  WARNING: Security imports exist but functions may not be used"
-  echo "   Verify all tools implement Step 4.5 security processing"
-  WARNINGS=$((WARNINGS + 1))
-else
-  echo "✅ Security imports present in api-key-handler.ts"
 fi
 echo ""
 

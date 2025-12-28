@@ -158,20 +158,20 @@ echo "📋 [10/12] Checking security package version..."
 if [ ! -f "package.json" ]; then
   echo "⚠️  WARNING: package.json not found"
   WARNINGS=$((WARNINGS + 1))
-elif ! grep -q "@pilpat/mcp-security" package.json 2>/dev/null; then
-  echo "❌ ERROR: @pilpat/mcp-security package not found in package.json"
+elif ! grep -q "pilpat-mcp-security" package.json 2>/dev/null; then
+  echo "❌ ERROR: pilpat-mcp-security package not found in package.json"
   echo "   This is MANDATORY for Phase 2 security (PII redaction & output sanitization)"
-  echo "   Fix: npm install @pilpat/mcp-security@^1.1.0"
+  echo "   Fix: npm install pilpat-mcp-security@^1.1.0"
   ERRORS=$((ERRORS + 1))
 else
   # Extract version (handles both "^1.1.0" and "1.1.0")
-  VERSION=$(grep "@pilpat/mcp-security" package.json | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  VERSION=$(grep "pilpat-mcp-security" package.json | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
   MAJOR=$(echo "$VERSION" | cut -d. -f1)
   MINOR=$(echo "$VERSION" | cut -d. -f2)
 
   if [ "$MAJOR" -lt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -lt 1 ]; }; then
-    echo "❌ ERROR: @pilpat/mcp-security version $VERSION is too old (need v1.1.0+)"
-    echo "   Fix: npm install @pilpat/mcp-security@^1.1.0"
+    echo "❌ ERROR: pilpat-mcp-security version $VERSION is too old (need v1.1.0+)"
+    echo "   Fix: npm install pilpat-mcp-security@^1.1.0"
     ERRORS=$((ERRORS + 1))
   else
     echo "✅ Security package v$VERSION installed (v1.1.0+ required for Polish PII)"
@@ -184,9 +184,9 @@ echo "📋 [11/12] Checking security imports in server.ts..."
 if [ ! -f "src/server.ts" ]; then
   echo "⚠️  WARNING: src/server.ts not found"
   WARNINGS=$((WARNINGS + 1))
-elif ! grep -q "from '@pilpat/mcp-security'" src/server.ts 2>/dev/null; then
+elif ! grep -q "from 'pilpat-mcp-security'" src/server.ts 2>/dev/null; then
   echo "❌ ERROR: Missing security imports in src/server.ts"
-  echo "   Add: import { sanitizeOutput, redactPII, validateOutput } from '@pilpat/mcp-security';"
+  echo "   Add: import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';"
   echo "   This is MANDATORY for Phase 2 security (Step 4.5)"
   ERRORS=$((ERRORS + 1))
 elif ! grep -q "sanitizeOutput\|redactPII\|validateOutput" src/server.ts 2>/dev/null; then
@@ -203,9 +203,9 @@ echo "📋 [12/12] Checking security imports in api-key-handler.ts..."
 if [ ! -f "src/api-key-handler.ts" ]; then
   echo "⚠️  WARNING: src/api-key-handler.ts not found"
   WARNINGS=$((WARNINGS + 1))
-elif ! grep -q "from '@pilpat/mcp-security'" src/api-key-handler.ts 2>/dev/null; then
+elif ! grep -q "from 'pilpat-mcp-security'" src/api-key-handler.ts 2>/dev/null; then
   echo "❌ ERROR: Missing security imports in api-key-handler.ts"
-  echo "   Add: import { sanitizeOutput, redactPII, validateOutput } from '@pilpat/mcp-security';"
+  echo "   Add: import { sanitizeOutput, redactPII, validateOutput } from 'pilpat-mcp-security';"
   echo "   API key path MUST have same security as OAuth path"
   ERRORS=$((ERRORS + 1))
 elif ! grep -q "sanitizeOutput\|redactPII\|validateOutput" src/api-key-handler.ts 2>/dev/null; then

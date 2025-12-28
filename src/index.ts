@@ -20,11 +20,10 @@ export { McpTypescriptDocsMCP };
  * 2. API Key Authentication - For non-OAuth clients
  *    - Flow: Client sends Authorization: Bearer wtyk_XXX → Validate → Tools
  *    - Used by: AnythingLLM, Cursor IDE, custom scripts
- *    - Endpoints: /sse, /mcp (with wtyk_ API key in header)
+ *    - Endpoint: /mcp (with wtyk_ API key in header)
  *
- * MCP Endpoints (support both auth methods):
- * - /sse - Server-Sent Events transport (for AnythingLLM, Claude Desktop)
- * - /mcp - Streamable HTTP transport (for ChatGPT and modern clients)
+ * MCP Endpoint (supports both auth methods):
+ * - /mcp - Streamable HTTP transport (recommended for all MCP clients)
  *
  * OAuth Endpoints (OAuth only):
  * - /authorize - Initiates OAuth flow, redirects to WorkOS AuthKit
@@ -38,11 +37,10 @@ export { McpTypescriptDocsMCP };
 
 // Create OAuthProvider instance (used when OAuth authentication is needed)
 const oauthProvider = new OAuthProvider({
-    // Dual transport support (SSE + Streamable HTTP)
+    // Streamable HTTP transport (modern MCP standard)
     // This ensures compatibility with all MCP clients (Claude, ChatGPT, etc.)
     apiHandlers: {
-        '/sse': McpTypescriptDocsMCP.serveSSE('/sse'),  // Legacy SSE transport
-        '/mcp': McpTypescriptDocsMCP.serve('/mcp'),     // New Streamable HTTP transport
+        '/mcp': McpTypescriptDocsMCP.serve('/mcp'),     // Streamable HTTP transport
     },
 
     // OAuth authentication handler (WorkOS AuthKit integration)
@@ -101,7 +99,7 @@ export default {
  * Detect if request should use API key authentication
  *
  * Criteria:
- * 1. Must be an MCP endpoint (/sse or /mcp)
+ * 1. Must be the MCP endpoint (/mcp)
  * 2. Must have Authorization header with API key (starts with wtyk_)
  *
  * OAuth endpoints (/authorize, /callback, /token, /register) are NEVER intercepted.
@@ -111,8 +109,8 @@ export default {
  * @returns true if API key request, false otherwise
  */
 function isApiKeyRequest(pathname: string, authHeader: string | null): boolean {
-    // Only intercept MCP transport endpoints
-    if (pathname !== "/sse" && pathname !== "/mcp") {
+    // Only intercept MCP transport endpoint
+    if (pathname !== "/mcp") {
         return false;
     }
 
